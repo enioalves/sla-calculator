@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Calculadora de SLA (horas úteis)</title>
+  <style>
+    body { 
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; 
+      max-width:900px; margin:30px auto; padding:20px; 
+      color:#222; background:#f9fafb; 
+    }
+    h1 { font-size:22px; margin-bottom:6px; color:#111; }
+    .card { 
+      background:#fff; 
+      border:1px solid #eaeaea; 
+      border-radius:12px; 
+      padding:24px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
+    }
+    label { display:block; margin-top:14px; font-weight:600; color:#333; }
+    input, select, button { 
+      margin-top:6px; padding:10px 12px; 
+      border-radius:8px; border:1px solid #ddd; 
+      width:100%; box-sizing:border-box; 
+      font-size:15px; 
+    }
+    input:focus, select:focus, button:focus { 
+      outline:none; border-color:#3b82f6; 
+      box-shadow:0 0 0 3px rgba(59,130,246,0.2); 
+    }
+    .row { display:flex; gap:12px; }
+    .col { flex:1; }
+    button { 
+      background:#3b82f6; 
+      color:#fff; font-weight:600; 
+      cursor:pointer; transition:background 0.2s; 
+      border:none; 
+    }
+    button:hover { background:#2563eb; }
+    .result { 
+      margin-top:18px; padding:14px; 
+      background:#f0f9ff; border-radius:8px; 
+      border:1px solid #bae6fd; 
+    }
+    small { color:#666; }
+    .muted { color:#555; font-size:14px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Calculadora de SLA (horas úteis)</h1>
+    <p class="muted">Horário útil: <strong>Seg–Sex, 09:00–18:00</strong>. Se o chamado for criado fora do expediente, o cálculo começa no próximo horário útil.</p>
+
+    <label>Data de criação</label>
+    <div class="row">
+      <div class="col">
+        <input id="date" type="date" />
+      </div>
+      <div class="col">
+        <input id="time" type="time" />
+      </div>
+    </div>
+
+    <label>Severidade</label>
+    <select id="severity">
+      <option value="8">Urgente — até 8 horas úteis</option>
+      <option value="24" selected>Alta — até 24 horas úteis</option>
+      <option value="48">Média — até 48 horas úteis</option>
+      <option value="72">Baixa — até 72 horas úteis</option>
+    </select>
+
+    <button id="calcBtn" style="margin-top:18px;">Calcular data/hora final</button>
+
+    <div id="output" class="result" style="display:none;">
+      <div id="finalText"></div>
+      <div style="margin-top:8px;" class="muted" id="debug"></div>
+    </div>
+  </div>
+
+  <script>
+    function isWeekend(d) { return d.getDay() === 0 || d.getDay() === 6; }
+    function setToWorkStart(d) { d.setHours(9,0,0,0); return d; }
+    function moveToNextWorkStart(d) { d.setDate(d.getDate() + 1); d.setHours(9,0,0,0); while (isWeekend(d)) { d.setDate(d.getDate() + 1); } return d; }
+    function formatLocal(d) { const pad = n => n.toString().padStart(2,'0'); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+
+    function calculateEnd(startDate, slaHours) {
+      let cur = new Date(startDate.getTime());
+      if (isWeekend(cur)) { cur = setToWorkStart(cur); while (isWeekend(cur)) { cur = moveToNextWorkStart(cur); } }
+      const startWork = new Date(cur.getTime()); startWork.setHours(9,0,0,0);
+      const endWork = new Date(cur.getTime()); endWork.setHours(18,0,0,0);
+      if (cur < startWork) cur = setToWorkStart(cur);
+      else if (cur >= endWork) cur = moveToNextWorkStart(cur);
+
+      let remainingMinutes = Math.round(slaHours * 60);
+      while (remainingMinutes > 0) {
+        const todayEnd = new Date(cur.getTime()); todayEnd.setHours(18,0,0,0);
+        const available = Math.max(0, Math.floor((todayEnd - cur) / 60000));
+        if (available >= remainingMinutes) { cur = new Date(cur.getTime() + remainingMinutes * 60000); remainingMinutes = 0; break; }
+        else { remainingMinutes -= available; cur = moveToNextWorkStart(cur); }
+      }
+      return cur;
+    }
+
+    document.getElementById('calcBtn').addEventListener('click', () => {
+      const dateV = document.getElementById('date').value;
+      const timeV = document.getElementById('time').value;
+      const sla = Number(document.getElementById('severity').value);
+      const out = document.getElementById('output');
+      const finalText = document.getElementById('finalText');
+      const debug = document.getElementById('debug');
+
+      if (!dateV || !timeV) { alert('Preencha data e hora de criação do chamado.'); return; }
+      const start = new Date(dateV + 'T' + timeV + ':00');
+      const final = calculateEnd(start, sla);
+
+      let startAdj = new Date(dateV + 'T' + timeV + ':00');
+      if (isWeekend(startAdj)) { let tmp = new Date(startAdj.getTime()); tmp = setToWorkStart(tmp); while (isWeekend(tmp)) tmp = moveToNextWorkStart(tmp); startAdj = tmp; }
+      else { const sWork = new Date(startAdj.getTime()); sWork.setHours(9,0,0,0); const eWork = new Date(startAdj.getTime()); eWork.setHours(18,0,0,0); if (startAdj < sWork) startAdj = setToWorkStart(startAdj); else if (startAdj >= eWork) startAdj = moveToNextWorkStart(startAdj); }
+      let note = '';
+      if (startAdj.getTime() !== new Date(dateV + 'T' + timeV + ':00').getTime()) { note = `Nota: início ajustado para ${formatLocal(startAdj)} (fora do expediente).`; }
+
+      out.style.display = 'block';
+      finalText.innerHTML = `<strong>Data/Hora final:</strong> ${formatLocal(final)}<br/><small>${note}</small>`;
+      debug.innerText = `Entrada: ${formatLocal(start)} · SLA: ${sla} horas`;
+    });
+  </script>
+</body>
+</html>
