@@ -1,129 +1,208 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Calculadora de SLA (horas úteis)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de SLA</title>
   <style>
-    body { 
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; 
-      max-width:900px; margin:30px auto; padding:20px; 
-      color:#222; background:#f9fafb; 
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
     }
-    h1 { font-size:22px; margin-bottom:6px; color:#111; }
-    .card { 
-      background:#fff; 
-      border:1px solid #eaeaea; 
-      border-radius:12px; 
-      padding:24px; 
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
+
+    .container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 20px;
+      max-width: 500px;
+      width: 100%;
+      box-sizing: border-box;
     }
-    label { display:block; margin-top:14px; font-weight:600; color:#333; }
-    input, select, button { 
-      margin-top:6px; padding:10px 12px; 
-      border-radius:8px; border:1px solid #ddd; 
-      width:100%; box-sizing:border-box; 
-      font-size:15px; 
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+      color: #333;
     }
-    input:focus, select:focus, button:focus { 
-      outline:none; border-color:#3b82f6; 
-      box-shadow:0 0 0 3px rgba(59,130,246,0.2); 
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      color: #444;
     }
-    .row { display:flex; gap:12px; }
-    .col { flex:1; }
-    button { 
-      background:#3b82f6; 
-      color:#fff; font-weight:600; 
-      cursor:pointer; transition:background 0.2s; 
-      border:none; 
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      box-sizing: border-box;
     }
-    button:hover { background:#2563eb; }
-    .result { 
-      margin-top:18px; padding:14px; 
-      background:#f0f9ff; border-radius:8px; 
-      border:1px solid #bae6fd; 
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      margin-top: 16px;
+      cursor: pointer;
+      transition: 0.2s;
     }
-    small { color:#666; }
-    .muted { color:#555; font-size:14px; }
+
+    button:hover {
+      background: #1e40af;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 12px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .tooltip select {
+      width: 100%;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 280px;
+      background-color: #333;
+      color: #fff;
+      text-align: left;
+      border-radius: 6px;
+      padding: 10px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%; 
+      left: 50%;
+      margin-left: -140px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 0.85rem;
+      line-height: 1.2rem;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    @media (max-width: 400px) {
+      h2 { font-size: 1.2rem; }
+      .tooltip .tooltiptext { width: 220px; margin-left: -110px; font-size: 0.75rem; }
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Calculadora de SLA (horas úteis)</h1>
-    <p class="muted">Horário útil: <strong>Seg–Sex, 09:00–18:00</strong>. Se o chamado for criado fora do expediente, o cálculo começa no próximo horário útil.</p>
+  <div class="container">
+    <h2>Calculadora de SLA</h2>
+    
+    <label for="dataAbertura">Data de Abertura:</label>
+    <input type="date" id="dataAbertura">
 
-    <label>Data de criação</label>
-    <div class="row">
-      <div class="col">
-        <input id="date" type="date" />
-      </div>
-      <div class="col">
-        <input id="time" type="time" />
-      </div>
+    <label for="horaAbertura">Hora de Abertura:</label>
+    <input type="time" id="horaAbertura">
+
+    <label for="severidade">Severidade:</label>
+    <div class="tooltip">
+      <select id="severidade">
+        <option value="8">⚫ Crítico</option>
+        <option value="24">🔴 Alto</option>
+        <option value="48">🟡 Médio</option>
+        <option value="72">🟢 Baixo</option>
+      </select>
+      <div class="tooltiptext" id="tooltipText"></div>
     </div>
 
-    <label>Severidade</label>
-    <select id="severity">
-      <option value="8">Urgente — até 8 horas úteis</option>
-      <option value="24" selected>Alta — até 24 horas úteis</option>
-      <option value="48">Média — até 48 horas úteis</option>
-      <option value="72">Baixa — até 72 horas úteis</option>
-    </select>
+    <button onclick="calcularSLA()">Calcular SLA</button>
 
-    <button id="calcBtn" style="margin-top:18px;">Calcular data/hora final</button>
-
-    <div id="output" class="result" style="display:none;">
-      <div id="finalText"></div>
-      <div style="margin-top:8px;" class="muted" id="debug"></div>
-    </div>
+    <div class="result" id="resultado">Preencha os campos acima</div>
   </div>
 
   <script>
-    function isWeekend(d) { return d.getDay() === 0 || d.getDay() === 6; }
-    function setToWorkStart(d) { d.setHours(9,0,0,0); return d; }
-    function moveToNextWorkStart(d) { d.setDate(d.getDate() + 1); d.setHours(9,0,0,0); while (isWeekend(d)) { d.setDate(d.getDate() + 1); } return d; }
-    function formatLocal(d) { const pad = n => n.toString().padStart(2,'0'); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+    // feriados nacionais fixos (formato MM-DD)
+    const feriadosFixos = [
+      "01-01", // Confraternização Universal
+      "04-21", // Tiradentes
+      "05-01", // Dia do Trabalho
+      "09-07", // Independência
+      "10-12", // Nossa Senhora Aparecida
+      "11-02", // Finados
+      "11-15", // Proclamação da República
+      "12-25"  // Natal
+    ];
 
-    function calculateEnd(startDate, slaHours) {
-      let cur = new Date(startDate.getTime());
-      if (isWeekend(cur)) { cur = setToWorkStart(cur); while (isWeekend(cur)) { cur = moveToNextWorkStart(cur); } }
-      const startWork = new Date(cur.getTime()); startWork.setHours(9,0,0,0);
-      const endWork = new Date(cur.getTime()); endWork.setHours(18,0,0,0);
-      if (cur < startWork) cur = setToWorkStart(cur);
-      else if (cur >= endWork) cur = moveToNextWorkStart(cur);
+    const tooltips = {
+      "8": "Crítico (Severidade 1): Problemas que causam a interrupção total dos serviços ou impossibilidade de funções essenciais. Exemplo: instabilidades gerais da Solucionare, falhas no TJDFT.",
+      "24": "Alto (Severidade 2): Problemas que afetam parcialmente os serviços com impacto significativo. Exemplo: atraso ou falha na entrega de publicações.",
+      "48": "Médio (Severidade 3): Impacta funções não essenciais ou tem solução alternativa temporária. Exemplo: problema recorrente de homônimos.",
+      "72": "Baixo (Severidade 4): Dúvidas operacionais ou ajustes sem impacto significativo. Exemplo: ajustes simples de cadastro e termos."
+    };
 
-      let remainingMinutes = Math.round(slaHours * 60);
-      while (remainingMinutes > 0) {
-        const todayEnd = new Date(cur.getTime()); todayEnd.setHours(18,0,0,0);
-        const available = Math.max(0, Math.floor((todayEnd - cur) / 60000));
-        if (available >= remainingMinutes) { cur = new Date(cur.getTime() + remainingMinutes * 60000); remainingMinutes = 0; break; }
-        else { remainingMinutes -= available; cur = moveToNextWorkStart(cur); }
-      }
-      return cur;
+    const select = document.getElementById("severidade");
+    const tooltipDiv = document.getElementById("tooltipText");
+
+    select.addEventListener("change", () => {
+      tooltipDiv.textContent = tooltips[select.value];
+    });
+    tooltipDiv.textContent = tooltips[select.value]; // inicializa
+
+    function isFeriado(date) {
+      let mes = String(date.getMonth() + 1).padStart(2, "0");
+      let dia = String(date.getDate()).padStart(2, "0");
+      return feriadosFixos.includes(`${mes}-${dia}`);
     }
 
-    document.getElementById('calcBtn').addEventListener('click', () => {
-      const dateV = document.getElementById('date').value;
-      const timeV = document.getElementById('time').value;
-      const sla = Number(document.getElementById('severity').value);
-      const out = document.getElementById('output');
-      const finalText = document.getElementById('finalText');
-      const debug = document.getElementById('debug');
+    function calcularSLA() {
+      const dataInput = document.getElementById("dataAbertura").value;
+      const horaInput = document.getElementById("horaAbertura").value;
+      const horasUteis = parseInt(document.getElementById("severidade").value);
 
-      if (!dateV || !timeV) { alert('Preencha data e hora de criação do chamado.'); return; }
-      const start = new Date(dateV + 'T' + timeV + ':00');
-      const final = calculateEnd(start, sla);
+      if (!dataInput || !horaInput) {
+        document.getElementById("resultado").innerText = "Por favor, insira a data e hora de abertura.";
+        return;
+      }
 
-      let startAdj = new Date(dateV + 'T' + timeV + ':00');
-      if (isWeekend(startAdj)) { let tmp = new Date(startAdj.getTime()); tmp = setToWorkStart(tmp); while (isWeekend(tmp)) tmp = moveToNextWorkStart(tmp); startAdj = tmp; }
-      else { const sWork = new Date(startAdj.getTime()); sWork.setHours(9,0,0,0); const eWork = new Date(startAdj.getTime()); eWork.setHours(18,0,0,0); if (startAdj < sWork) startAdj = setToWorkStart(startAdj); else if (startAdj >= eWork) startAdj = moveToNextWorkStart(startAdj); }
-      let note = '';
-      if (startAdj.getTime() !== new Date(dateV + 'T' + timeV + ':00').getTime()) { note = `Nota: início ajustado para ${formatLocal(startAdj)} (fora do expediente).`; }
+      let data = new Date(`${dataInput}T${horaInput}`);
+      let horasRestantes = horasUteis;
 
-      out.style.display = 'block';
-      finalText.innerHTML = `<strong>Data/Hora final:</strong> ${formatLocal(final)}<br/><small>${note}</small>`;
-      debug.innerText = `Entrada: ${formatLocal(start)} · SLA: ${sla} horas`;
-    });
+      while (horasRestantes > 0) {
+        data.setHours(data.getHours() + 1);
+
+        let hora = data.getHours();
+        let diaSemana = data.getDay();
+
+        // só conta se for dia útil, não feriado e entre 9h-18h
+        if (
+          diaSemana !== 0 && diaSemana !== 6 && 
+          !isFeriado(data) &&
+          hora >= 9 && hora < 18
+        ) {
+          horasRestantes--;
+        }
+      }
+
+      document.getElementById("resultado").innerText =
+        "Data/Hora Final: " + data.toLocaleString("pt-BR");
+    }
   </script>
 </body>
 </html>
