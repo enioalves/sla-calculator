@@ -18,7 +18,7 @@
       background: #fff;
       border-radius: 16px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 20px;
+      padding: 16px;
       max-width: 500px;
       width: 100%;
       box-sizing: border-box;
@@ -26,47 +26,47 @@
 
     h2 {
       text-align: center;
-      margin-bottom: 20px;
-      font-size: 1.5rem;
+      margin-bottom: 16px;
+      font-size: 1.4rem;
       color: #333;
     }
 
     label {
       display: block;
-      margin: 12px 0 6px;
+      margin: 8px 0 4px;
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #444;
     }
 
     input, select, button {
       width: 100%;
-      padding: 10px;
-      border-radius: 8px;
+      padding: 8px;
+      border-radius: 6px;
       border: 1px solid #ccc;
-      font-size: 1rem;
+      font-size: 0.95rem;
       box-sizing: border-box;
     }
 
     button {
-      background: #2563eb;
+      background: #7c3aed; /* Roxo */
       color: white;
       border: none;
-      margin-top: 16px;
+      margin-top: 12px;
       cursor: pointer;
       transition: 0.2s;
     }
 
     button:hover {
-      background: #1e40af;
+      background: #5b21b6; /* Roxo mais escuro no hover */
     }
 
     .result {
-      margin-top: 20px;
-      padding: 12px;
+      margin-top: 16px;
+      padding: 10px;
       background: #f1f5f9;
-      border-radius: 8px;
-      font-size: 1rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
       text-align: center;
     }
 
@@ -77,27 +77,23 @@
       width: 100%;
     }
 
-    .tooltip select {
-      width: 100%;
-    }
-
     .tooltip .tooltiptext {
       visibility: hidden;
-      width: 280px;
+      width: 260px;
       background-color: #333;
       color: #fff;
       text-align: left;
       border-radius: 6px;
-      padding: 10px;
+      padding: 8px;
       position: absolute;
       z-index: 1;
-      bottom: 125%; 
+      bottom: 120%; 
       left: 50%;
-      margin-left: -140px;
+      margin-left: -130px;
       opacity: 0;
       transition: opacity 0.3s;
-      font-size: 0.85rem;
-      line-height: 1.2rem;
+      font-size: 0.8rem;
+      line-height: 1.1rem;
     }
 
     .tooltip:hover .tooltiptext {
@@ -106,8 +102,9 @@
     }
 
     @media (max-width: 400px) {
-      h2 { font-size: 1.2rem; }
-      .tooltip .tooltiptext { width: 220px; margin-left: -110px; font-size: 0.75rem; }
+      h2 { font-size: 1.1rem; }
+      input, select, button { font-size: 0.85rem; padding: 7px; }
+      .tooltip .tooltiptext { width: 200px; margin-left: -100px; font-size: 0.7rem; }
     }
   </style>
 </head>
@@ -138,16 +135,9 @@
   </div>
 
   <script>
-    // feriados nacionais fixos (formato MM-DD)
     const feriadosFixos = [
-      "01-01", // Confraternização Universal
-      "04-21", // Tiradentes
-      "05-01", // Dia do Trabalho
-      "09-07", // Independência
-      "10-12", // Nossa Senhora Aparecida
-      "11-02", // Finados
-      "11-15", // Proclamação da República
-      "12-25"  // Natal
+      "01-01","04-21","05-01","09-07",
+      "10-12","11-02","11-15","12-25"
     ];
 
     const tooltips = {
@@ -163,7 +153,7 @@
     select.addEventListener("change", () => {
       tooltipDiv.textContent = tooltips[select.value];
     });
-    tooltipDiv.textContent = tooltips[select.value]; // inicializa
+    tooltipDiv.textContent = tooltips[select.value]; 
 
     function isFeriado(date) {
       let mes = String(date.getMonth() + 1).padStart(2, "0");
@@ -186,11 +176,9 @@
 
       while (horasRestantes > 0) {
         data.setHours(data.getHours() + 1);
-
         let hora = data.getHours();
         let diaSemana = data.getDay();
 
-        // só conta se for dia útil, não feriado e entre 9h-18h
         if (
           diaSemana !== 0 && diaSemana !== 6 && 
           !isFeriado(data) &&
