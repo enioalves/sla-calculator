@@ -135,62 +135,117 @@
   </div>
 
   <script>
-    const feriadosFixos = [
-      "01-01","04-21","05-01","09-07",
-      "10-12","11-02","11-15","12-25"
-    ];
+<script>
+    const feriadosFixos = [
+      "01-01","04-21","05-01","09-07",
+      "10-12","11-02","11-15","12-25"
+    ];
 
-    const tooltips = {
-      "8": "Crítico (Severidade 1): Problemas que causam a interrupção total dos serviços ou impossibilidade de funções essenciais. Exemplo: instabilidades gerais do serviço de captura de publicações, falhas em tribunais.",
-      "24": "Alto (Severidade 2): Problemas que afetam parcialmente os serviços com impacto significativo. Exemplo: atraso ou falha na entrega de publicações.",
-      "48": "Médio (Severidade 3): Impacta funções não essenciais ou tem solução alternativa temporária. Exemplo: problema recorrente de homônimos.",
-      "72": "Baixo (Severidade 4): Dúvidas operacionais ou ajustes sem impacto significativo. Exemplo: ajustes simples de cadastro e termos."
-    };
+    const tooltips = {
+      "8": "Crítico (Severidade 1): Problemas que causam a interrupção total dos serviços ou impossibilidade de funções essenciais. Exemplo: instabilidades gerais do serviço de captura de publicações, falhas em tribunais.",
+      "24": "Alto (Severidade 2): Problemas que afetam parcialmente os serviços com impacto significativo. Exemplo: atraso ou falha na entrega de publicações.",
+      "48": "Médio (Severidade 3): Impacta funções não essenciais ou tem solução alternativa temporária. Exemplo: problema recorrente de homônimos.",
+      "72": "Baixo (Severidade 4): Dúvidas operacionais ou ajustes sem impacto significativo. Exemplo: ajustes simples de cadastro e termos."
+    };
 
-    const select = document.getElementById("severidade");
-    const tooltipDiv = document.getElementById("tooltipText");
+    const select = document.getElementById("severidade");
+    const tooltipDiv = document.getElementById("tooltipText");
 
-    select.addEventListener("change", () => {
-      tooltipDiv.textContent = tooltips[select.value];
-    });
-    tooltipDiv.textContent = tooltips[select.value]; 
+    // Inicializa o Tooltip
+    select.addEventListener("change", () => {
+      tooltipDiv.textContent = tooltips[select.value];
+    });
+    tooltipDiv.textContent = tooltips[select.value]; 
 
-    function isFeriado(date) {
-      let mes = String(date.getMonth() + 1).padStart(2, "0");
-      let dia = String(date.getDate()).padStart(2, "0");
-      return feriadosFixos.includes(`${mes}-${dia}`);
-    }
+    // ----------------------------------------------------
+    // NOVO: Funções de inicialização da Data e Hora
+    // ----------------------------------------------------
 
-    function calcularSLA() {
-      const dataInput = document.getElementById("dataAbertura").value;
-      const horaInput = document.getElementById("horaAbertura").value;
-      const horasUteis = parseInt(document.getElementById("severidade").value);
+    function inicializarDataEHora() {
+      const dataAberturaInput = document.getElementById("dataAbertura");
+      const horaAberturaInput = document.getElementById("horaAbertura");
 
-      if (!dataInput || !horaInput) {
-        document.getElementById("resultado").innerText = "Por favor, insira a data e hora de abertura.";
-        return;
-      }
+      // 1. Definir Data Atual
+      const agora = new Date();
 
-      let data = new Date(`${dataInput}T${horaInput}`);
-      let horasRestantes = horasUteis;
+      // Formata a data para YYYY-MM-DD
+      const ano = agora.getFullYear();
+      const mes = String(agora.getMonth() + 1).padStart(2, '0');
+      const dia = String(agora.getDate()).padStart(2, '0');
+      dataAberturaInput.value = `${ano}-${mes}-${dia}`;
 
-      while (horasRestantes > 0) {
-        data.setHours(data.getHours() + 1);
-        let hora = data.getHours();
-        let diaSemana = data.getDay();
+      // 2. Definir Hora Atual (quebrada em 15 em 15 minutos)
 
-        if (
-          diaSemana !== 0 && diaSemana !== 6 && 
-          !isFeriado(data) &&
-          hora >= 9 && hora < 18
-        ) {
-          horasRestantes--;
-        }
-      }
+      let minutos = agora.getMinutes();
+      let horas = agora.getHours();
+      
+      // Arredonda os minutos para o intervalo de 15 mais próximo
+      minutos = Math.ceil(minutos / 15) * 15;
 
-      document.getElementById("resultado").innerText =
-        "Data/Hora Final: " + data.toLocaleString("pt-BR");
-    }
+      // Se os minutos arredondados ultrapassarem 60, incrementa a hora
+      if (minutos >= 60) {
+        minutos = 0;
+        horas += 1;
+      }
+
+      // Garante que as horas não passem de 24 (no caso de 23:53 arredondar para 24:00)
+      // O input type="time" lida automaticamente com o rollover de data se as horas chegarem a 24, 
+      // mas para garantir a formatação correta do input, limitamos a 23.
+      if (horas >= 24) {
+        horas = 0; // O usuário deve ajustar a data para o dia seguinte, se necessário.
+      }
+
+      // Formata a hora para HH:MM
+      const horaFormatada = String(horas).padStart(2, '0');
+      const minutoFormatado = String(minutos).padStart(2, '0');
+      
+      horaAberturaInput.value = `${horaFormatada}:${minutoFormatado}`;
+    }
+
+    // ----------------------------------------------------
+    // Executa a função de inicialização quando a página carrega
+    // ----------------------------------------------------
+    window.onload = inicializarDataEHora;
+
+
+    // Funções de Cálculo do SLA (Mantidas)
+    function isFeriado(date) {
+      let mes = String(date.getMonth() + 1).padStart(2, "0");
+      let dia = String(date.getDate()).padStart(2, "0");
+      return feriadosFixos.includes(`${mes}-${dia}`);
+    }
+
+    function calcularSLA() {
+      const dataInput = document.getElementById("dataAbertura").value;
+      const horaInput = document.getElementById("horaAbertura").value;
+      const horasUteis = parseInt(document.getElementById("severidade").value);
+
+      if (!dataInput || !horaInput) {
+        document.getElementById("resultado").innerText = "Por favor, insira a data e hora de abertura.";
+        return;
+      }
+
+      let data = new Date(`${dataInput}T${horaInput}`);
+      let horasRestantes = horasUteis;
+
+      while (horasRestantes > 0) {
+        data.setHours(data.getHours() + 1);
+        let hora = data.getHours();
+        let diaSemana = data.getDay();
+
+        if (
+          diaSemana !== 0 && diaSemana !== 6 && 
+          !isFeriado(data) &&
+          hora >= 9 && hora < 18
+        ) {
+          horasRestantes--;
+        }
+      }
+
+      document.getElementById("resultado").innerText =
+        "Data/Hora Final: " + data.toLocaleString("pt-BR");
+    }
+  </script>
   </script>
 </body>
 </html>
